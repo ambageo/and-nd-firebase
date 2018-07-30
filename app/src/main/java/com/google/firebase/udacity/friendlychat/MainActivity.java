@@ -130,8 +130,13 @@ public class MainActivity extends AppCompatActivity {
 
         mChildEventListener = new ChildEventListener() {
             @Override
+            // This method is called whenever a new message is called, but also when the Listener is
+            // first attached
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                // By passing the FriendlyMessage class as a parameter in the getValue method,
+                // we deserialize the message we get from the database into a FriendlyMessage object
                 FriendlyMessage friendlyMessage = dataSnapshot.getValue(FriendlyMessage.class);
+                // Then we pass the Friendly Message to the adapter to get it displayed
                 mMessageAdapter.add(friendlyMessage);
             }
 
@@ -140,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
             public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
             public void onCancelled(DatabaseError databaseError) {}
         };
+        // Here we are attaching (adding) the Listener to our reference
         mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
     }
 
