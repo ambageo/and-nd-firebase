@@ -153,9 +153,11 @@ public class MainActivity extends AppCompatActivity {
         };
         mMessagesDatabaseReference.addChildEventListener(mChildEventListener);
 
+        // The AuthStateListener is responsible for listening to signing in/out changes
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                // First of all, get the current user
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
@@ -165,7 +167,9 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
+                                    // This is set to true when we want to automatically sign  the user in
                                     .setIsSmartLockEnabled(false)
+                                    // Here we list the providers (different login choices) we want to have available
                                     .setAvailableProviders(
                                             Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),
                                             new AuthUI.IdpConfig.GoogleBuilder().build()))
@@ -179,12 +183,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // In onResume is where I attach the AuthStateListener
         mFirebaseAuth.addAuthStateListener(mAuthStateListener);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        // Here I detach the AuthStateListener
         if (mAuthStateListener != null) {
             mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
         }
