@@ -64,8 +64,12 @@ public class MainActivity extends AppCompatActivity {
         mUsername = ANONYMOUS;
 
         // Initialize Firebase components
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
 
+        // Entry access point for the database
+        mFirebaseDatabase = FirebaseDatabase.getInstance();
+        // Here we're getting access to a specific part of the database.
+        // The mFirebaseDatabase.getReference part gives access to the root node. The rest specifies
+        // we are interested in the messages part.
         mMessagesDatabaseReference = mFirebaseDatabase.getReference().child("messages");
 
         // Initialize references to views
@@ -117,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 FriendlyMessage friendlyMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
+                // Here we use the push() method because we want a new id generated for each message.
                 mMessagesDatabaseReference.push().setValue(friendlyMessage);
 
                 // Clear input box
