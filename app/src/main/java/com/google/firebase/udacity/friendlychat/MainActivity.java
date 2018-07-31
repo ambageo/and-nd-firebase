@@ -41,6 +41,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -151,9 +152,9 @@ public class MainActivity extends AppCompatActivity {
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
                                     .setIsSmartLockEnabled(false)
-                                    .setProviders(
-                                            AuthUI.EMAIL_PROVIDER,
-                                            AuthUI.GOOGLE_PROVIDER)
+                                    .setAvailableProviders(
+                                            Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),
+                                            new AuthUI.IdpConfig.GoogleBuilder().build()))
                                     .build(),
                             RC_SIGN_IN);
                 }
@@ -190,12 +191,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onSignedInInitialize(String username) {
+        // Set the user name
         mUsername = username;
         attachDatabaseReadListener();
     }
 
     private void onSignedOutCleanup() {
+        // Unset the user name
         mUsername = ANONYMOUS;
+        // Clear the adapter (the messages list) so when the user is logged out,
+        // they cannot see the messages
         mMessageAdapter.clear();
         detachDatabaseReadListener();
     }
