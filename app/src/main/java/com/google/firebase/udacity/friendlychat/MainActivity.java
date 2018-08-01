@@ -35,7 +35,10 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -48,6 +51,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -166,9 +170,9 @@ public class MainActivity extends AppCompatActivity {
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
                                     .setIsSmartLockEnabled(false)
-                                    .setProviders(
-                                            AuthUI.EMAIL_PROVIDER,
-                                            AuthUI.GOOGLE_PROVIDER)
+                                    .setAvailableProviders(
+                                            Arrays.asList(new AuthUI.IdpConfig.EmailBuilder().build(),
+                                                    new AuthUI.IdpConfig.GoogleBuilder().build()))
                                     .build(),
                             RC_SIGN_IN);
                 }
@@ -192,20 +196,28 @@ public class MainActivity extends AppCompatActivity {
             Uri selectedImageUri = data.getData();
 
             // Get a reference to store file at chat_photos/<FILENAME>
-            StorageReference photoRef = mChatPhotosStorageReference.child(selectedImageUri.getLastPathSegment());
+            final StorageReference photoRef = mChatPhotosStorageReference.child(selectedImageUri.getLastPathSegment());
 
             // Upload file to Firebase Storage
-            photoRef.putFile(selectedImageUri)
-                    .addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            // When the image has successfully uploaded, we get its download URL
-                            Uri downloadUrl = taskSnapshot.getDownloadUrl();
-
-                            // Set the download URL to the message box, so that the user can send it to the database
-                            FriendlyMessage friendlyMessage = new FriendlyMessage(null, mUsername, downloadUrl.toString());
-                            mMessagesDatabaseReference.push().setValue(friendlyMessage);
+            photoRef.putFile(selectedImageUri).continueWithTask(
+                    new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                        @Override
+                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                            if(!task.isSuccessful()) {
+                                throw task.getException();
+                            }
+                            return photoRef.getDownloadUrl();
                         }
-                    });
+                    }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+                @Override
+                public void onComplete(@NonNull Task<Uri> task) {
+                    if(task.isSuccessful()) {
+                        Uri downloadUri= task.getResult();
+                        FriendlyMessage message= new FriendlyMessage(null, mUsername, downloadUri.toString());
+                        mMessagesDatabaseReference.push().setValue(message);
+                    }
+                }
+            });
         }
     }
 
